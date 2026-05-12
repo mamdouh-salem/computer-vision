@@ -19,5 +19,5 @@ Welcome to my central repository for Computer Vision research and implementation
 
 ## 📬 Contact & Collaboration
 **Author:** Mamdouh Salem  
-**Role:** Aspiring Machine Learning Engineer / CV Researcher  
+**Role:** Aspiring Machine Learning Engineer / Computer vision  
 [GitHub Profile](https://github.com/mamdouh-salem)
