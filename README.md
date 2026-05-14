@@ -1,23 +1,19 @@
-# Computer Vision & Deep Learning Portfolio
+# 👁️ Computer Vision Portfolio
 
-Welcome to my central repository for Computer Vision research and implementations. This space serves as a professional showcase of end-to-end ML pipelines, ranging from real-time inference to complex neural architecture fine-tuning.
+Welcome to my professional Computer Vision architecture and deep learning portfolio. This repository highlights production-ready applications, edge models, and containerized deployment pipelines.
 
-## 🚀 Projects Archive
+## 📁 Portfolio Projects
 
-### 1. [Real-Time Age Estimation](./age_detection_project)
-* **Architecture:** Fine-tuned MobileNetV2 (Regression & Classification heads).
-* **Engineering:** Custom OOP pipeline including `DataLoader`, `DataAugmentor`, and `ModelTrainer`.
-* **Dataset:** UTKFace (66,000+ images).
-* **Optimization:** Achieved early convergence for regression in 8 epochs.
+### 1. 🚀 Production Real-Time Age Detection & Deployment
+* **Location:** `/age_deployment`
+* **Technologies:** Python, TensorFlow (Keras 3), OpenCV, Flask, Gunicorn, Docker
+* **Core Functionality:** Processes live webcam video frames via a base64 streaming data pipeline, runs real-time calibration tuning, applies a rolling moving average filter for prediction stability, and classifies ages deterministically.
+* **Architecture Highlight:** Containerized with Docker and served via Gunicorn for high-throughput, multi-threaded request handling.
+
+### 2. 🧪 Model Training & Core Development
+* **Location:** `/age_detection`
+* **Technologies:** TensorFlow, Deep CNNs, Data Augmentation
+* **Core Functionality:** Explores underlying dataset pre-processing, convolutional layers hyperparameter tuning, model training scripts, and regression evaluation matrices.
 
 ---
-
-## 🛠️ Core Competencies
-* **Frameworks:** TensorFlow, Keras, PyTorch.
-* **Libraries:** OpenCV (Inference & Processing), NumPy, Pandas.
-* **Hardware:** Optimized for CUDA/NVIDIA GPU acceleration.
-
-## 📬 Contact & Collaboration
-**Author:** Mamdouh Salem  
-**Role:** Aspiring Machine Learning Engineer / Computer vision  
-[GitHub Profile](https://github.com/mamdouh-salem)
+*Maintained by Mamdouh Salem. Built using VS Code and WSL (Ubuntu).*
