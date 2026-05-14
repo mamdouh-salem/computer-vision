@@ -1,3 +1,14 @@
+yaml
+---
+title: Real-Time Age Detection
+emoji: 🧠
+colorFrom: blue
+colorTo: indigo
+sdk: docker
+app_port: 5000
+pinned: false
+---
+
 # 👁️ Computer Vision Portfolio
 
 Welcome to my professional Computer Vision architecture and deep learning portfolio. This repository highlights production-ready applications, edge models, and containerized deployment pipelines.
