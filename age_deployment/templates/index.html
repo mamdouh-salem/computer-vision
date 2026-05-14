@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Age AI</title>
+    <style>
+        body { background: #111; color: white; font-family: sans-serif; text-align: center; }
+        video { width: 600px; border-radius: 15px; border: 3px solid #3498db; transform: scaleX(-1); }
+        .output { background: #222; padding: 20px; border-radius: 15px; display: inline-block; margin-top: 20px; min-width: 200px; }
+        #age { font-size: 3em; color: #3498db; }
+        #status { font-size: 0.8em; color: #555; margin-top: 10px; }
+    </style>
+</head>
+<body>
+    <h1>AI Age Estimation</h1>
+    <video id="v" autoplay playsinline></video>
+    <canvas id="c" width="640" height="480" style="display:none;"></canvas>
+    <br>
+    <div class="output">
+        <div id="age">--</div>
+        <div id="group">Processing...</div>
+        <div id="status">Status: Checking Server</div>
+    </div>
+
+    <script>
+        const v = document.getElementById('v');
+        const c = document.getElementById('c');
+
+        navigator.mediaDevices.getUserMedia({ video: true })
+            .then(s => { v.srcObject = s; });
+
+        async function detect() {
+            const ctx = c.getContext('2d');
+            ctx.drawImage(v, 0, 0, 640, 480);
+            
+            // Explicitly set format and quality
+            const data = c.toDataURL('image/jpeg', 0.5);
+
+            try {
+                const response = await fetch('/predict', {
+                    method: 'POST',
+                    body: JSON.stringify({ image: data }),
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    document.getElementById('age').innerText = result.age;
+                    document.getElementById('group').innerText = result.group;
+                    document.getElementById('status').innerText = "Status: Online";
+                } else {
+                    document.getElementById('status').innerText = "Server Error: " + result.error;
+                }
+            } catch (err) {
+                document.getElementById('status').innerText = "Status: Connection Failed";
+            }
+        }
+        setInterval(detect, 1000);
+    </script>
+</body>
+</html>
