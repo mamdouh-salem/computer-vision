@@ -1,0 +1,9 @@
+# Ignore all compiled local neural network weights files to prevent GitHub file size errors
+saved_models/
+*.keras
+*.pt
+*.h5
+
+# Ignore system and python code caches
+__pycache__/
+.ipynb_checkpoints/

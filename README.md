@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 ---
 title: Real-Time Age Detection
 emoji: 🧠
@@ -10,6 +11,8 @@ pinned: false
 ---
 
 
+=======
+>>>>>>> 99a898649caaa7f730acb54c626ddc97715a483e
 # 👁️ Computer Vision Portfolio
 
 Welcome to my professional Computer Vision architecture and deep learning portfolio. This repository highlights production-ready applications, edge models, and containerized deployment pipelines.
