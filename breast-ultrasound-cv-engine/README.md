@@ -1,123 +1,45 @@
-# Multi-Phase Breast Ultrasound Diagnostic System (BUSI)
-[![Keras 3 Framework](https://shields.io)](https://keras.io)
-[![PyTorch Backend](https://shields.io)](https://pytorch.org)
-[![OS Linux](https://shields.io)](https://ubuntu.com)
+# Multi-Task Deep Learning Framework for Ultrasound Image Classification & Semantic Segmentation
 
-An end-to-end, multi-task deep learning repository designed for automated lesion classification and spatial segmentation using breast ultrasound imagery. This project implements a fully modular, object-oriented pipeline transitioning across custom convolutional networks, ImageNet transfer learning matrices, and fine-tuned Vision Transformers (ViT), supported by unsupervised pixel quantization.
+An end-to-end medical computer vision repository engineering Keras 3 layers mapped directly onto a stable PyTorch execution backend engine. The architecture processes multi-class classification configurations (Benign, Malignant, Normal) and applies self-attention semantic segmentation overlays to track lesion boundaries inside breast ultrasound image directories. Optimized to ensure hardware loop stability on consumer GPU layers (NVIDIA RTX 3050 via WSL2 Ubuntu virtual environments).
 
----
+## 🚀 Repository Pipeline & Cell Breakdown
 
-## 🛠️ Production System Architecture
+### Cell 1: Environment Setup & Keras Multi-Backend Engine Routing
+* **Purpose**: Initializes the hardware environment constraints and locks global reproducible random seeds across frameworks.
+* **Key Operations**: Maps `os.environ["KERAS_BACKEND"] = "torch"` to route standard Keras APIs through native PyTorch backend layers. It configures `torch.backends.cudnn.enabled = False` to prevent native cuDNN compilation trace crashes inside WSL systems. It also includes an automated garbage collection buffer tool (`flush_system_memory()`) to prevent VRAM memory overflows.
+* **Core Classes**: 
+  * `ProjectConfig`: Encapsulates spatial input bounds (`224x224`), dataset anchors (`/home/mamdouh_salem/ultrasound_data`), and training hyper-parameters.
 
-The codebase drops monolithic script layouts in favor of an object-oriented tracking pipeline split into distinct operational domains:
+### Cell 2: Instructor Data Augmentation & Universal Model Generators
+* **Purpose**: Coordinates structural data matrix splits and manages live spatial data augmentation streaming pipelines.
+* **Key Operations**: Generates a balanced 80/10/10 data division matrix using a strict stratified profile (`train_test_split(stratify=...)`) to correct underlying medical class imbalances. It implements a custom NumPy filter (`data_augment_np`) that executes random rotations, mirror flips, and brightness variance via OpenCV without degrading physical medical tissue borders.
+* **Core Classes**:
+  * `UltrasoundGenerator(keras.utils.PyDataset)`: Streams data batches on the fly, scales pixel intensities down between `0.0` and `1.0`, and yields stable one-hot encoded matrix targets.
 
-```text
-├── Config Domain         # Centralized hyperparameters & reproducibility control
-├── Data Engineering      # Sanitization parser, stratification, & native streams
-├── Diagnostics Engine    # Name-based binary savers & visual clinical metrics
-├── Model Factories       # Baseline CNN, Transfer Learning suite, & Native HF ViT
-├── Segmentation Suite    # Custom Encoder-Decoder U-Net with Skip-Connections
-└── Unsupervised Suite   # K-Means pixel intensity quantization noise filter
-```
+### Cell 3: Medical Mask Segmentation Generator Stream
+* **Purpose**: Establishes parallel high-density target stream arrays specifically for self-attention semantic mapping workflows.
+* **Key Operations**: Loads source scans alongside corresponding target segmentation masks. It enforces a crisp mass contour boundary cutoff during resizing operations by strictly using nearest-neighbor interpolation (`cv2.INTER_NEAREST`) and standard thresholding arrays (`np.where(mask > 0.5, 1.0, 0.0)`).
+* **Core Classes**:
+  * `UltrasoundSegmentationDataset(keras.utils.PyDataset)`: Pushes pixel-level validation coordinates, utilizing channel expansion tools (`np.expand_dims(..., axis=-1)`) to handle multi-dimensional loss calculation shapes.
 
----
+### Cell 4: Model Architecture Build Factory
+* **Purpose**: Acts as the centralized structural production engine compiling custom, convolutional, and transformer-based model layouts.
+* **Key Operations**: Integrates explicit tensor permutations (`layers.Permute`) to switch incoming channel-last images into channel-first inputs required by HuggingFace Transformers. It drops leaky PyTorch functional lambdas, replacing them with standard Keras `layers.UpSampling2D(size=(4, 4))` layers to resize downscaled matrices safely.
+* **Core Classes**:
+  * `ViTBackboneLayer(layers.Layer)`: Wraps a pre-trained Vision Transformer model configuration (`google/vit-base-patch16-224`).
+  * `SegFormerBackboneLayer(layers.Layer)`: Wraps a pre-trained NVIDIA `SegformerForSemanticSegmentation` layer (`nvidia/mit-b0`), returning pure backpropagatable tensors.
+  * `MedicalModelFactory`: Composes production pipelines for Custom CNNs from scratch, frozen Feature Extraction convolutional loops (`ResNet50`), global attention classifiers, and custom pixel-wise segmentation models.
 
-## 📊 Core Engineering Pipeline (Cell-by-Cell Breakdown)
+### Cell 5: Performance Evaluation Engine and Mask Visualizer
+* **Purpose**: Evaluates cross-validation performance parameters and renders high-fidelity comparative visual arrays.
+* **Key Operations**: Tracks classification reports containing precision, recall, and F1-score matrices. It configures Matplotlib graphics to render triple-column verification charts comparing source scans, ground truth targets, and predicted attention paths.
+* **Core Classes**:
+  * `PerformanceEvaluator`: Handles automated testing routines. It pulls explicit batch array index targets (`images, masks = seg_test_gen`) to process visualization graphs cleanly without encountering Python generator unpacking trace errors.
 
-### 🟩 Cell 1: Environment Setup & Centralized Configuration
-* **Mechanics:** Establishes the `ProjectConfig` parameters and maps absolute home directories (`/home/mamdouh_salem/ultrasound_data`). It implements a global `seed_everything` module locking random Python, NumPy, and PyTorch states to guarantee deterministic repeatability.
-* **Architecture Strategy:** Explicitly binds Keras 3 to execute on top of the **PyTorch backend** (`os.environ["KERAS_BACKEND"] = "torch"`). This successfully bypassed corrupted local TensorFlow C++ binary namespaces inside the WSL Ubuntu layer without altering the neural network structural code.
+### Cell 6: Classification Master Execution Loop
+* **Purpose**: Manages and triggers sequential model training phases across all primary image classification setups.
+* **Key Operations**: Coordinates consecutive training workflows across Phase 1 (Baseline CNN, lr=1e-4), Phase 2 (ResNet-50 Transfer Learning with frozen convolutional feature blocks, lr=1e-5), and Phase 3 (HuggingFace ViT using a low learning rate anchor of 2e-5). It runs explicit VRAM flushes between models to guarantee runtime safety.
 
-### 🟩 Cell 2: Programmatic Data Discovery Parser
-* **Mechanics:** Traverses local directories via `pathlib.Path.glob` to filter out background duplicate mask elements and assemble a verified path mapping table (`image_path` ↔ `mask_path`) exported as a unified Pandas DataFrame.
-* **Architecture Strategy:** Prevents data contamination. Because the source dataset pools raw ultrasounds and target masks inside the same subfolders, standard directory flow tools treat masks as classification targets. This custom parser isolates raw scans cleanly.
-
-### 🟩 Cell 3: Proportional Stratified Partitioning Splitter
-* **Mechanics:** Executes an isolation split separating metadata records into **70% Training, 15% Validation, and 15% Testing** sets.
-* **Architecture Strategy:** Medical datasets suffer from heavy long-tailed distributions (437 Benign vs. 133 Normal). Applying strict stratification on the class target indices ensures that every training subset and evaluation tracking loop perfectly replicates the true underlying distribution of the patient populace.
-
-### 🟩 Cell 4: Native PyTorch Data Streaming Engine
-* **Mechanics:** Overrides the PyTorch native `Dataset` interface, utilizing OpenCV (`cv2`) to perform thread-safe disk reading, color space transformations, and pixel normalization.
-* **Architecture Strategy:** Engineered explicitly around local hardware bounds. Running asynchronous multi-threaded data workers inside WSL Ubuntu caused hypervisor RAM memory leaks (`vmmem`). Setting `num_workers=0` and `pin_memory=False` restricted dataset streaming to the primary execution thread, eliminating RAM spikes.
-
-### 🟩 Cell 5: Automated Weight Tracker & Performance Evaluator
-* **Mechanics:** Inherits from `keras.callbacks.Callback` to monitor validation tracking points and serialize `.keras` weights only when optimization milestones are cleared.
-* **Architecture Strategy:** Decouples evaluation from training cycles. It extracts model predictions over the hidden test stream, computes Precision, Recall, and Macro F1 scores, and automatically plots a Seaborn **Confusion Matrix Heatmap** for clinical error profiling.
-
-### 🟩 Cell 6: Multi-Phase Architecture Factory Registry
-* **Mechanics:** A consolidated model registry tracking three distinct development phases:
-  * *Phase 1:* Custom Baseline Deep CNN utilizing alternating Conv2D, Batch Normalization, MaxPooling2D, and heavy Dropout to prevent overfitting.
-  * *Phase 2:* Dynamic Transfer Learning factory pulling pre-trained ImageNet backbones (`ResNet50`, `EfficientNet`, `DenseNet`, `MobileNet`), locking feature extractors, and appending custom medical dense classification heads.
-  * *Phase 3:* Fine-Tuning wrapper structuring a Vision Transformer (ViT) patch projection block via a specialized `Conv2D` layer.
-* **Architecture Strategy:** To align with the PyTorch array sequencing structure, the ViT patch projector implements `data_format="channels_first"` to process inputs accurately and prevent shape calculation mismatches.
-
-### 🟩 Cell 7: Master Memory-Protected Classification Training Loop
-* **Mechanics:** The central runtime engine driving classification optimization back-to-back.
-* **Architecture Strategy:** To run heavy models inside a 16GB RAM and 6GB GPU laptop workspace, this cell utilizes a custom `flush_system_memory` function combining `keras.backend.clear_session()`, `torch.cuda.empty_cache()`, and Python's native `gc.collect()`. It forcefully purges cached gradient arrays the exact microsecond a model run finishes, keeping system memory allocation flat.
-
-### 🟩 Cell 8 & 9: Custom Baseline U-Net Segmentation Suite
-* **Mechanics:** Implements a classic contracting and expanding **U-Net architecture** from scratch. It re-configures the PyTorch data pipelines to `is_segmentation=True` to pull binary lesion maps, trains the network via pixel-wise `binary_crossentropy`, and plots spatial target mask overlays.
-* **Architecture Strategy:** Utilizes feature tensor concatenation to bridge matching resolution blocks across the "U" graph. These skip-connections transfer crisp, uncompressed edge details directly from the encoder to the decoder, enabling precise spatial reconstruction of lesion boundaries.
-
-### 🟩 Cell 10 & 11: Unsupervised K-Means Quantization Dashboard
-* **Mechanics:** Flattens test image matrices and applies unsupervised clustering (`sklearn.cluster.KMeans`) to segment continuous grayscale values into 3 distinct structural intensities (Fluid, Tissue, Tumor).
-* **Architecture Strategy:** Served as an advanced unsupervised intensity sanitizer. By grouping pixel arrays autonomously, it filters out grain and acoustic speckle noise, providing an independent visual validation layout for clinical presentations.
-
----
-
-## 🔬 Performance Scoreboard & Evaluation
-
-```text
-=====================================================================
-🏆 COMPREHENSIVE MULTI-PHASE PROJECT PERFORMANCE SCOREBOARD
-=====================================================================
-                            f1_macro      Precision       Recall
-Phase 1: Baseline CNN         0.5313         0.5421       0.5288
-Phase 2: ResNet50 Transfer    0.2404         0.3110       0.2845
-Phase 3: HF ViT Fine-Tune     0.3414         0.4167       0.3800
-```
-
-### 💡 Clinical Engineering Insights
-1. **Custom CNN Texture Optimization:** The Custom Phase 1 CNN outperformed complex ImageNet transfer networks on Macro F1. This is caused by **domain mismatch**—ImageNet backbones are tuned to sharp natural objects (cars, animals), while ultrasound scans are composed of continuous acoustic shadows and grainy textures.
-2. **High-Recall ViT Diagnostics:** The fine-tuned Vision Transformer achieved an exceptional **0.95 recall for benign tissue structures**. Clinically, this provides massive portfolio utility by reliably filtering out non-dangerous cases to reduce unnecessary patient biopsies.
-
----
-
-## ⚡ Hardware Constraints & Infrastructure Solutions
-Developing this project within an active **WSL2 Ubuntu container on an NVIDIA RTX 3050 Laptop GPU (6GB VRAM, 16GB RAM)** presented real-world infrastructure obstacles:
-
-* **The Problem:** Heavy consecutive model training caused the background Linux compute service (`wslservice.exe`) to deadlock, pegging physical host RAM at 83% and dropping the VS Code session link.
-* **The Engineering Fix:** 
-  1. Modified the global Windows hypervisor environment configuration file (`.wslconfig`) to strictly cap virtual machine limits to a maximum of `4GB RAM`.
-  2. Scaled parameters safely down to `batch_size = 2` and `img_size = 128`.
-  3. Integrated active garbage collection memory flushes into the training step completions, ensuring 100% processing uptime with zero framework drops.
-
----
-
-## 🚀 Getting Started
-
-### 1. Clone & Set Up the Absolute Data Directory
-```bash
-git clone https://github.com
-cd breast-ultrasound-cv-engine
-```
-Ensure your ultrasound dataset folders (`benign`, `malignant`, `normal`) are extracted exactly to your absolute target home location:
-```text
-/home/mamdouh_salem/ultrasound_data/Dataset_BUSI_with_GT/
-```
-
-### 2. Configure Your System RAM Allocation
-Create a `.wslconfig` file in your Windows user profile directory (`C:\Users\YourName\.wslconfig`) to protect your hardware from memory caps:
-```ini
-[wsl2]
-memory=4GB
-swap=4GB
-```
-Restart your environment via an administrative command prompt:
-```cmd
-taskkill /f /im wslservice.exe
-wsl --shutdown
-```
-
-### 3. Open VS Code & Run All
-Connect to your WSL window instance, open `breast-ultrasound-cv-engine.ipynb`, select your Python 3 virtual environment interpreter kernel, and click **Run All** to watch the automated evaluation pipeline execute in real-time!
+### Cell 7: Segmentation Task Run Engine (Hugging Face SegFormer)
+* **Purpose**: Fine-tunes and validates the final self-attention semantic mapping model to trace target lesion areas.
+* **Key Operations**: Compiles the `SegFormer` layout with Binary Cross-Entropy loss to evaluate errors pixel-by-pixel, executes training loops on mask pipelines, and renders final overlay graphics for presentations.
